@@ -247,3 +247,188 @@ def test_syllable_hint_with_multiple_syllables():
     hint1 = tutor1.get_phonics_hint(2)
     assert "1 syllable" in hint1
     assert "1 syllables" not in hint1
+
+
+def test_get_introduction_format():
+    """Test that introduction checks encouraging phrase and word included."""
+    tutor = SpellingTutor("hello", "medium", "other")
+    intro = tutor.get_introduction()
+
+    # Check word is included
+    assert "hello" in intro
+    assert "Let's spell the word" in intro
+
+    # Check encouraging phrase is included
+    encouraging_phrases = [
+        "Great!", "Nice work!", "Fantastic!", "Excellent!", "Amazing"
+    ]
+    has_encouraging = any(phrase in intro for phrase in encouraging_phrases)
+    assert has_encouraging, f"Introduction should contain encouraging phrase: {intro}"
+
+    # Check overall format
+    assert intro.endswith("'hello'.")
+
+
+def test_get_phonics_hint_all_attempts():
+    """Test hints for attempts 1, 2, 3, and beyond."""
+    tutor = SpellingTutor("elephant", "hard", "other")
+
+    # Attempt 1
+    hint1 = tutor.get_phonics_hint(1)
+    assert "Think about the sounds" in hint1
+    assert "What sound does it start with" in hint1
+
+    # Attempt 2
+    hint2 = tutor.get_phonics_hint(2)
+    assert "syllable" in hint2
+    assert "3 syllables" in hint2  # elephant has 3 syllables
+
+    # Attempt 3
+    hint3 = tutor.get_phonics_hint(3)
+    assert "sounds:" in hint3
+    assert "vowel" in hint3 or "consonant" in hint3
+
+    # Attempt 4+ (give answer)
+    hint4 = tutor.get_phonics_hint(4)
+    assert "ELEPHANT" in hint4
+    assert "spelled:" in hint4
+
+    hint5 = tutor.get_phonics_hint(5)
+    assert "ELEPHANT" in hint5  # Should still give answer
+
+
+def test_check_spelling_exact_match():
+    """Test correct spelling detection with exact matches."""
+    tutor = SpellingTutor("word", "easy", "other")
+
+    # Exact match
+    correct, feedback = tutor.check_spelling("word")
+    assert correct is True
+    assert feedback in ["Awesome!", "Great job!", "You got it!", "Fantastic!", "Perfect!", "Excellent work!", "Amazing!"]
+
+
+def test_check_spelling_case_insensitive():
+    """Test that CAT cat CaT all work."""
+    tutor = SpellingTutor("cat", "easy", "CVC")
+
+    # Test various cases
+    test_cases = ["cat", "CAT", "Cat", "CaT", "cAt", "cAT"]
+    for test_input in test_cases:
+        correct, feedback = tutor.check_spelling(test_input)
+        assert correct is True, f"Failed for input: {test_input}"
+        assert feedback != "", f"No feedback for input: {test_input}"
+
+
+def test_check_spelling_whitespace():
+    """Test leading and trailing spaces are handled."""
+    tutor = SpellingTutor("dog", "easy", "CVC")
+
+    # Test whitespace handling
+    whitespace_cases = [" dog", "dog ", "  dog  ", "\tdog\t", "\n dog \n"]
+    for test_input in whitespace_cases:
+        correct, feedback = tutor.check_spelling(test_input)
+        assert correct is True, f"Failed for input: '{test_input}'"
+        assert feedback != "", f"No feedback for input: '{test_input}'"
+
+
+def test_check_spelling_close_match():
+    """Test 1 character difference detection."""
+    tutor = SpellingTutor("cat", "easy", "CVC")
+
+    # 1 character differences
+    close_cases = ["bat", "cot", "cut", "cats", "ca", "at"]
+    for test_input in close_cases:
+        correct, feedback = tutor.check_spelling(test_input)
+        assert correct is False, f"Should be incorrect for: {test_input}"
+        assert feedback == "Almost! Try again.", f"Wrong feedback for: {test_input}"
+
+
+def test_check_spelling_far_match():
+    """Test completely wrong spelling."""
+    tutor = SpellingTutor("cat", "easy", "CVC")
+
+    # Completely different words
+    wrong_cases = ["elephant", "wonderful", "xyz", "12345", "house"]
+    for test_input in wrong_cases:
+        correct, feedback = tutor.check_spelling(test_input)
+        assert correct is False, f"Should be incorrect for: {test_input}"
+        assert feedback == "", f"Should have empty feedback for: {test_input}"
+
+
+def test_positive_feedback_variety():
+    """Test multiple calls return different phrases."""
+    tutor = SpellingTutor("test", "easy", "other")
+
+    expected_phrases = [
+        "Awesome!", "Great job!", "You got it!", "Fantastic!",
+        "Perfect!", "Excellent work!", "Amazing!"
+    ]
+
+    # Get multiple feedback instances
+    feedback_list = [tutor.get_positive_feedback() for _ in range(20)]
+
+    # Check all are from expected list
+    for feedback in feedback_list:
+        assert feedback in expected_phrases
+
+    # Check we get variety (should have at least 2 different phrases in 20 calls)
+    unique_feedback = set(feedback_list)
+    assert len(unique_feedback) >= 2, "Should get some variety in feedback"
+
+
+def test_count_syllables_accuracy():
+    """Test 1, 2, 3 syllable words for accuracy."""
+    tutor = SpellingTutor("test", "easy", "other")
+
+    # 1 syllable words
+    one_syllable = ["cat", "dog", "run", "tree", "make", "cake", "house"]
+    for word in one_syllable:
+        assert tutor.count_syllables(word) == 1, f"'{word}' should be 1 syllable"
+
+    # 2 syllable words
+    two_syllable = ["apple", "table", "happy", "water", "money", "paper", "simple"]
+    for word in two_syllable:
+        assert tutor.count_syllables(word) == 2, f"'{word}' should be 2 syllables"
+
+    # 3 syllable words
+    three_syllable = ["elephant", "banana", "computer", "important", "beautiful", "wonderful"]
+    for word in three_syllable:
+        assert tutor.count_syllables(word) == 3, f"'{word}' should be 3 syllables"
+
+
+def test_check_spelling_empty_input():
+    """Test empty string input handling."""
+    tutor = SpellingTutor("cat", "easy", "CVC")
+
+    correct, feedback = tutor.check_spelling("")
+    assert correct is False
+    assert feedback == ""
+
+
+def test_phonics_hint_progression_consistency():
+    """Test that phonics hints are consistent for same attempt number."""
+    tutor = SpellingTutor("ship", "easy", "digraph-sh")
+
+    # Same attempt should give same hint
+    hint1a = tutor.get_phonics_hint(1)
+    hint1b = tutor.get_phonics_hint(1)
+    assert hint1a == hint1b
+
+    hint3a = tutor.get_phonics_hint(3)
+    hint3b = tutor.get_phonics_hint(3)
+    assert hint3a == hint3b
+
+
+def test_syllable_counting_with_y():
+    """Test syllable counting correctly handles 'y' as vowel."""
+    tutor = SpellingTutor("test", "easy", "other")
+
+    # Words where 'y' acts as vowel
+    assert tutor.count_syllables("happy") == 2  # hap-py
+    assert tutor.count_syllables("pretty") == 2  # pret-ty
+    assert tutor.count_syllables("family") == 3  # fam-i-ly
+    assert tutor.count_syllables("country") == 2  # coun-try
+
+    # Words where 'y' acts as consonant (at beginning)
+    assert tutor.count_syllables("yes") == 1
+    assert tutor.count_syllables("yellow") == 2  # yel-low
