@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Environment variables
+.env
+
+# Database files
+*.db
+
+# Testing
+.pytest_cache/
+
+# Word lists data
+data/word_lists/*.txt
