@@ -1,0 +1,10 @@
+pyproject.toml
+src/spelling_tutor/config.py
+src/spelling_tutor/database.py
+src/spelling_tutor/types.py
+src/spelling_tutor_agent.egg-info/PKG-INFO
+src/spelling_tutor_agent.egg-info/SOURCES.txt
+src/spelling_tutor_agent.egg-info/dependency_links.txt
+src/spelling_tutor_agent.egg-info/requires.txt
+src/spelling_tutor_agent.egg-info/top_level.txt
+tests/test_database.py
