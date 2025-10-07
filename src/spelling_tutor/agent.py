@@ -7,7 +7,8 @@ from datetime import datetime
 import livekit
 from livekit import agents, rtc
 from livekit.agents import llm, tts, stt, tokenize
-from livekit.plugins import openai, deepgram
+# TODO: Fix plugin imports when LiveKit plugins are properly installed
+# from livekit.plugins import openai, deepgram
 
 # Local imports
 from .database import get_word_list, create_session, record_word_attempt, complete_session
@@ -95,18 +96,22 @@ class SpellingTutorAgent:
         # Create LiveKit room instance
         self.room = rtc.Room()
 
-        # Initialize TTS (Text-to-Speech) using OpenAI
-        self.tts_instance = openai.TTS(
-            model="tts-1",
-            voice="nova",  # Child-friendly voice
-            api_key=self.config["OPENAI_API_KEY"]
-        )
+        # TODO: Initialize TTS (Text-to-Speech) using OpenAI
+        # self.tts_instance = openai.TTS(
+        #     model="tts-1",
+        #     voice="nova",  # Child-friendly voice
+        #     api_key=self.config["OPENAI_API_KEY"]
+        # )
 
-        # Initialize STT (Speech-to-Text) using Deepgram
-        self.stt_instance = deepgram.STT(
-            model="nova-2",
-            api_key=self.config["DEEPGRAM_API_KEY"]
-        )
+        # TODO: Initialize STT (Speech-to-Text) using Deepgram
+        # self.stt_instance = deepgram.STT(
+        #     model="nova-2",
+        #     api_key=self.config["DEEPGRAM_API_KEY"]
+        # )
+
+        # Placeholder instances for now
+        self.tts_instance = None
+        self.stt_instance = None
 
         # Connect to LiveKit room
         await self.room.connect(
