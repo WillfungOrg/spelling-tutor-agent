@@ -54,6 +54,36 @@ python -m spelling_tutor.main setup --name "Emma" --age 7
 
 ## Usage
 
+### Start Voice Agent
+
+Start the LiveKit voice agent worker:
+```bash
+python -m spelling_tutor.agent_worker
+```
+
+For console testing with text/audio input:
+```bash
+python -m spelling_tutor.agent_worker console
+```
+
+The agent will:
+- Connect to your LiveKit server using Agents Framework 1.2.14+
+- Initialize with child_id=1 and word_list_id=1 (configurable in production)
+- Provide voice-based spelling practice with OpenAI TTS (nova voice) and Deepgram STT
+- Process spelling attempts and provide phonics-based hints
+- Track progress in the local SQLite database
+
+**Features:**
+- 🎯 **Adaptive Learning**: Progressive hints based on attempt number
+- 🔊 **Child-Friendly Voice**: OpenAI TTS with "nova" voice optimized for children
+- 🎤 **Accurate Recognition**: Deepgram STT with "nova-2" model
+- 📊 **Progress Tracking**: Records attempts, hints used, and success rates
+- 🧠 **Smart Hints**: Phonics-based hints using CVC patterns, digraphs, and blends
+
+**Console Mode**: Press [Ctrl+B] to toggle between text/audio input, [Q] to quit.
+
+Note: The agent worker must be running before users can connect via LiveKit client SDK or Agents Playground.
+
 ### Upload Word List
 ```bash
 python -m spelling_tutor.main upload --name "Week 1 Words" --file data/word_lists/week1.txt
@@ -64,10 +94,6 @@ python -m spelling_tutor.main upload --name "Week 1 Words" --file data/word_list
 python -m spelling_tutor.main list-words
 ```
 
-### Start Practice Session
-```bash
-python -m spelling_tutor.main start --child-id 1 --word-list-id 1
-```
 
 ### Check Progress
 ```bash
@@ -91,6 +117,17 @@ Example file: `data/word_lists/week1.txt`
 
 ## Testing
 
+### Test Voice Agent
+Test the voice agent in console mode:
+```bash
+python -m spelling_tutor.agent_worker console
+```
+
+Try speaking or typing spelling attempts like:
+- "cat" (correct spelling)
+- "kat" (close spelling - should give hints)
+- "dog" (wrong word - should provide hints)
+
 ### Run All Tests
 ```bash
 pytest tests/ -v
@@ -100,6 +137,42 @@ pytest tests/ -v
 ```bash
 pytest tests/ --cov=spelling_tutor --cov-report=html
 ```
+
+## Troubleshooting
+
+### Voice Agent Issues
+
+**No audio output:**
+- Verify OpenAI API key is valid and has sufficient credits
+- Check system audio settings and volume
+- Try console mode for testing: `python -m spelling_tutor.agent_worker console`
+
+**Speech recognition not working:**
+- Verify Deepgram API key is valid
+- Check microphone permissions on macOS
+- Ensure your microphone is working and not muted
+
+**Agent startup errors:**
+```bash
+# Test configuration
+python -c "from spelling_tutor.config import Config; c = Config(); print('✅ Config loaded')"
+
+# Test database
+python -c "from spelling_tutor.database import get_word_list; print('✅ Database accessible')"
+```
+
+**Missing environment variables:**
+```bash
+# Copy and edit the environment file
+cp .env.example .env
+# Then edit .env with your API keys
+```
+
+### Common Error Messages
+
+- `RuntimeError: trying to generate reply without an LLM model` → Fixed in latest version
+- `TypeError: on_user_turn_completed() got unexpected keyword argument` → Fixed in latest version
+- `OpenAI 500 server error` → Temporary OpenAI service issue, agent will retry automatically
 
 ## How It Works
 
@@ -123,6 +196,7 @@ spelling-tutor-agent/
 ├── src/spelling_tutor/
 │   ├── __init__.py
 │   ├── agent.py              # LiveKit voice agent
+│   ├── agent_worker.py       # Agent worker launcher
 │   ├── config.py             # Environment configuration
 │   ├── database.py           # SQLite database operations
 │   ├── main.py               # CLI interface

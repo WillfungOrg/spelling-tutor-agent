@@ -20,6 +20,7 @@ class SpellingTutor:
         self.word = word.lower()
         self.difficulty = difficulty
         self.phonics_category = phonics_category
+        self.current_attempts = 0
 
     def get_introduction(self) -> str:
         """

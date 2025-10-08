@@ -5,7 +5,9 @@ Summary: AI-powered spelling tutor with voice interaction
 Author: William Fung
 Requires-Python: >=3.8
 Requires-Dist: livekit>=0.15.0
-Requires-Dist: livekit-agents>=0.8.0
+Requires-Dist: livekit-agents>=1.2.14
+Requires-Dist: livekit-plugins-openai>=1.2.6
+Requires-Dist: livekit-plugins-deepgram>=1.2.14
 Requires-Dist: openai>=1.0.0
 Requires-Dist: deepgram-sdk>=3.0.0
 Requires-Dist: python-dotenv>=1.0.0

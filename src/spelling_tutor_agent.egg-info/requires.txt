@@ -1,5 +1,7 @@
 livekit>=0.15.0
-livekit-agents>=0.8.0
+livekit-agents>=1.2.14
+livekit-plugins-openai>=1.2.6
+livekit-plugins-deepgram>=1.2.14
 openai>=1.0.0
 deepgram-sdk>=3.0.0
 python-dotenv>=1.0.0

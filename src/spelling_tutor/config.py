@@ -2,6 +2,19 @@ import os
 from dotenv import load_dotenv
 
 
+class Config:
+    """Configuration class for environment variables."""
+
+    def __init__(self):
+        load_dotenv()
+
+        self.livekit_url = os.getenv("LIVEKIT_URL")
+        self.livekit_api_key = os.getenv("LIVEKIT_API_KEY")
+        self.livekit_api_secret = os.getenv("LIVEKIT_API_SECRET")
+        self.openai_api_key = os.getenv("OPENAI_API_KEY")
+        self.deepgram_api_key = os.getenv("DEEPGRAM_API_KEY")
+
+
 def load_config() -> dict:
     """
     Load and validate environment variables from .env file.

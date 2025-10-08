@@ -1,0 +1,24 @@
+prompt: |
+  Fix LiveKit voice agent integration to properly use JobContext pattern. UPDATE src/spelling_tutor/main.py start command: Import livekit.agents.cli. Remove manual Worker instantiation. Define async def entrypoint(ctx: agents.JobContext) INSIDE start function. Inside entrypoint create TTS using openai.TTS(model=tts-1, voice=nova), create STT using deepgram.STT(model=nova-2), create VoiceAssistant with tts and stt, call assistant.start(ctx.room), load word_list and create session, iterate through words using await assistant.say() for speaking and appropriate methods for listening, check spelling with SpellingTutor, record attempts to database, complete session. After entrypoint definition call agents.cli.run_app(agents.WorkerOptions(entrypoint_fnc=entrypoint)). UPDATE src/spelling_tutor/agent.py: Remove any Worker usage, keep only SpellingTutorAgent class with helper methods for tutor logic. CREATE tests/test_livekit_integration.py: def test_voice_assistant_initialization mocks JobContext and tests TTS/STT creation, def test_entrypoint_function mocks JobContext and room, tests entrypoint can be called without errors, def test_session_flow_with_mocked_voice mocks assistant.say and listening, verifies spelling session completes and records to database.
+
+coder_model: claude-4-sonnet
+
+context_editable:
+  - src/spelling_tutor/main.py
+  - src/spelling_tutor/agent.py
+  - tests/test_livekit_integration.py
+
+context_read_only:
+  - src/spelling_tutor/config.py
+  - src/spelling_tutor/database.py
+  - src/spelling_tutor/tutor_logic.py
+  - src/spelling_tutor/types.py
+  - pyproject.toml
+
+execution_command: pytest tests/test_livekit_integration.py -v --tb=short
+
+max_iterations: 10
+
+evaluator_model: gpt-4.1
+
+evaluator: default

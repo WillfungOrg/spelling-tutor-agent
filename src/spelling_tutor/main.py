@@ -9,10 +9,10 @@ import click
 from .config import load_config, get_db_path
 from .database import (
     init_database, create_child_profile, get_child_profile,
-    list_word_lists, get_word_list, get_child_sessions
+    list_word_lists, get_word_list, get_child_sessions,
+    create_session, record_word_attempt, complete_session
 )
 from .word_manager import upload_word_list
-from .agent import SpellingTutorAgent
 
 
 @click.group()
@@ -136,58 +136,8 @@ def list_words():
         sys.exit(1)
 
 
-@cli.command()
-@click.option('--child-id', required=True, type=int, help='ID of the child')
-@click.option('--word-list-id', required=True, type=int, help='ID of the word list to practice')
-def start(child_id: int, word_list_id: int):
-    """
-    Start a spelling practice session.
-
-    Launches an interactive voice session using LiveKit where the child
-    practices spelling words from the specified word list.
-
-    Examples:
-        python -m spelling_tutor.main start --child-id 1 --word-list-id 1
-        python -m spelling_tutor.main start --child-id 2 --word-list-id 3
-    """
-    try:
-        # Load configuration
-        config = load_config()
-        click.echo("✅ Configuration loaded successfully")
-
-        # Validate child exists
-        child = get_child_profile(child_id)
-        if not child:
-            click.echo(f"❌ Child with ID {child_id} not found", err=True)
-            sys.exit(1)
-
-        click.echo(f"👶 Child: {child.name} (age {child.age})")
-
-        # Validate word list exists
-        try:
-            word_list, words = get_word_list(word_list_id)
-            click.echo(f"📚 Word List: {word_list.name} ({len(words)} words)")
-        except ValueError:
-            click.echo(f"❌ Word list with ID {word_list_id} not found", err=True)
-            sys.exit(1)
-
-        # Create and start the agent
-        click.echo("\n🚀 Starting spelling practice session...")
-        click.echo("Press Ctrl+C to stop the session gracefully")
-
-        agent = SpellingTutorAgent(config, child_id, word_list_id)
-
-        # Run the session
-        asyncio.run(agent.start())
-
-        click.echo("\n✅ Spelling session completed successfully!")
-
-    except KeyboardInterrupt:
-        click.echo("\n\n⏹️  Session stopped by user")
-        click.echo("Session progress has been saved.")
-    except Exception as e:
-        click.echo(f"\n❌ Error during spelling session: {e}", err=True)
-        sys.exit(1)
+# Note: To start the voice agent, run:
+#   python -m spelling_tutor.agent_worker
 
 
 @cli.command('show-progress')
