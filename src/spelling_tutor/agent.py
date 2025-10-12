@@ -9,8 +9,9 @@ from livekit.agents import Agent, AgentSession, RunContext
 from livekit.agents.llm import function_tool
 from livekit.plugins import openai, deepgram
 from .tutor_logic import SpellingTutor
-from .database import get_word_list, create_session, record_word_attempt, complete_session, get_child_profile
+from .database import create_session, record_word_attempt, complete_session, get_child_profile
 from .word_manager import get_phonics_category
+from .word_list_loader import load_word_list_from_file, get_default_word_list
 from .config import Config
 import logging
 
@@ -21,14 +22,20 @@ logger = logging.getLogger(__name__)
 class SpellingTutorAgent(Agent):
     """Spelling tutor agent - structured exactly like working examples."""
 
-    def __init__(self, child_id: int, word_list_id: int):
+    def __init__(self, child_id: int, word_list_name: str = None):
         # Store configuration
         self.child_id = child_id
-        self.word_list_id = word_list_id
 
-        # Load data
-        self.word_list, self.words = get_word_list(word_list_id)
-        self.db_session = create_session(child_id, word_list_id)
+        # Load word list from file
+        if word_list_name is None:
+            word_list_name = get_default_word_list()
+
+        self.word_list_name, self.words = load_word_list_from_file(word_list_name)
+        logger.info(f"Loaded word list '{self.word_list_name}' with {len(self.words)} words")
+
+        # Create database session (using word_list_name as identifier)
+        # Note: We'll use a placeholder word_list_id=0 for file-based lists
+        self.db_session = create_session(child_id, word_list_id=0)
         child = get_child_profile(child_id)
 
         # Initialize state
@@ -49,7 +56,9 @@ class SpellingTutorAgent(Agent):
         # Simple instructions like working examples
         super().__init__(
             instructions=f"""You are {self.child_name}'s spelling tutor.
-            When the user says letters or words, use the spell_word function to process their spelling attempt.
+            ONLY call the spell_word function when the user provides their spelling attempt.
+            DO NOT call spell_word based on your own responses or when presenting a new word.
+            Wait for the user to respond before calling any functions.
             Be encouraging and patient."""
         )
 
@@ -80,12 +89,13 @@ class SpellingTutorAgent(Agent):
         if correct:
             # Correct! Move to next word
             await self.record_attempt(correct=True)
+            previous_word = self.words[self.current_word_index].word
             await self.move_to_next_word()
 
             if self.current_word:
-                return f"Excellent work, {self.child_name}! You spelled {self.words[self.current_word_index-1].word} perfectly! Ready for the next word? Your word is: {self.current_word.word}."
+                return f"Excellent work, {self.child_name}! You spelled '{previous_word}' perfectly! Now let's try the next word: '{self.current_word.word}'. Please spell it for me."
             else:
-                return f"Excellent work, {self.child_name}! You spelled {self.words[self.current_word_index-1].word} perfectly! You finished all the words! Amazing job today!"
+                return f"Excellent work, {self.child_name}! You spelled '{previous_word}' perfectly! You finished all the words! Amazing job today!"
 
         elif self.current_tutor.current_attempts < 3:
             # Give hint
@@ -98,13 +108,14 @@ class SpellingTutorAgent(Agent):
         else:
             # Final attempt
             await self.record_attempt(correct=False)
-            correct_spelling = self.current_word.word.upper()
+            previous_word = self.current_word.word
+            correct_spelling = previous_word.upper()
             await self.move_to_next_word()
 
             if self.current_word:
-                return f"Not quite. The correct spelling is {correct_spelling}. Your next word is: {self.current_word.word}."
+                return f"That's okay, {self.child_name}. The correct spelling is '{correct_spelling}'. Let's move on to the next word: '{self.current_word.word}'. Please spell it for me."
             else:
-                return f"Not quite. The correct spelling is {correct_spelling}. You've completed all the words! Great job practicing!"
+                return f"That's okay, {self.child_name}. The correct spelling is '{correct_spelling}'. You've completed all the words! Great job practicing!"
 
     def _is_noise_input(self, attempt: str) -> bool:
         """Check if input is noise."""

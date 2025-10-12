@@ -54,37 +54,119 @@ python -m spelling_tutor.main setup --name "Emma" --age 7
 
 ## Usage
 
-### Start Voice Agent
+### Managing the Voice Agent
 
-Start the LiveKit voice agent worker:
+The agent runs in the background and waits for connections from LiveKit clients. Use the management script to control it:
+
 ```bash
-python -m spelling_tutor.agent_worker
+# Start the agent
+./manage_agent.sh start
+
+# Check if agent is running
+./manage_agent.sh status
+
+# View agent logs in real-time
+./manage_agent.sh logs
+
+# Stop the agent
+./manage_agent.sh stop
+
+# Restart the agent
+./manage_agent.sh restart
 ```
 
-For console testing with text/audio input:
+**Manual start (alternative):**
+```bash
+python -m spelling_tutor.agent_worker start
+```
+
+**Console testing mode:**
 ```bash
 python -m spelling_tutor.agent_worker console
 ```
+Press [Ctrl+B] to toggle between text/audio input, [Q] to quit.
 
 The agent will:
 - Connect to your LiveKit server using Agents Framework 1.2.14+
-- Initialize with child_id=1 and word_list_id=1 (configurable in production)
-- Provide voice-based spelling practice with OpenAI TTS (nova voice) and Deepgram STT
+- Load word lists from `data/word_lists/` directory (defaults to `week1.txt`)
+- Provide voice-based spelling practice with OpenAI TTS and Deepgram STT
 - Process spelling attempts and provide phonics-based hints
 - Track progress in the local SQLite database
 
 **Features:**
 - 🎯 **Adaptive Learning**: Progressive hints based on attempt number
-- 🔊 **Child-Friendly Voice**: OpenAI TTS with "nova" voice optimized for children
+- 🔊 **Child-Friendly Voice**: OpenAI TTS with "alloy" voice optimized for children
 - 🎤 **Accurate Recognition**: Deepgram STT with "nova-2" model
 - 📊 **Progress Tracking**: Records attempts, hints used, and success rates
 - 🧠 **Smart Hints**: Phonics-based hints using CVC patterns, digraphs, and blends
+- 📁 **File-Based Word Lists**: Easy to add/update word lists by editing text files
 
-**Console Mode**: Press [Ctrl+B] to toggle between text/audio input, [Q] to quit.
+**Note:** The agent must be running before users can connect via LiveKit client or playground.
 
-Note: The agent worker must be running before users can connect via LiveKit client SDK or Agents Playground.
+### Connecting to the Agent
 
-### Upload Word List
+#### Generate Access Token
+
+To connect a client to the agent, you need to generate an access token:
+
+```bash
+# Generate token with default settings (week1 word list)
+python3 generate_livekit_token.py
+
+# Generate token for specific room and word list
+python3 generate_livekit_token.py --room my-session --word-list week1
+
+# Custom settings
+python3 generate_livekit_token.py \
+  --room spelling-practice \
+  --identity student-name \
+  --child-id 1 \
+  --word-list week1
+```
+
+The token will be saved to `livekit_token.txt` and displayed in the terminal.
+
+#### Test in LiveKit Playground
+
+1. Start the agent: `./manage_agent.sh start`
+2. Generate a token: `python3 generate_livekit_token.py`
+3. Go to: https://agents-playground.livekit.io/
+4. Paste your LiveKit URL and token
+5. Click "Connect" and start practicing!
+
+### Managing Word Lists
+
+#### View Available Word Lists
+```bash
+python3 list_words.py
+```
+
+#### View Words in a Specific List
+```bash
+python3 list_words.py week1
+```
+
+#### Add a New Word List
+
+Simply create a new text file in `data/word_lists/`:
+
+```bash
+# Create a new word list
+cat > data/word_lists/week2.txt << EOF
+apple
+banana
+orange
+grape
+strawberry
+EOF
+
+# Verify it's loaded
+python3 list_words.py week2
+```
+
+The agent will automatically detect and use the new word list!
+
+### Upload Word List (Legacy CLI)
 ```bash
 python -m spelling_tutor.main upload --name "Week 1 Words" --file data/word_lists/week1.txt
 ```

@@ -13,3 +13,9 @@ __pycache__/
 
 # Word lists data
 data/word_lists/*.txt
+
+# Agent runtime files
+.agent.pid
+agent.log
+livekit_token.txt
+nohup.out

@@ -50,9 +50,9 @@ async def entrypoint(ctx: agents.JobContext):
     # Connect to the room
     await ctx.connect()
 
-    # Get child_id and word_list_id from multiple sources
+    # Get child_id and word_list_name from multiple sources
     child_id = 1  # Default: Emma
-    word_list_id = 1  # Default: Test Words
+    word_list_name = None  # Will use default from word_list_loader
 
     # Try to get metadata from room first
     room_metadata = getattr(ctx.room, 'metadata', '') or ''
@@ -81,26 +81,33 @@ async def entrypoint(ctx: agents.JobContext):
                     if key == 'child_id':
                         child_id = int(value)
                         logger.info(f"Found child_id: {child_id}")
-                    elif key == 'word_list_id':
-                        word_list_id = int(value)
-                        logger.info(f"Found word_list_id: {word_list_id}")
-            logger.info(f"✅ Using metadata: child_id={child_id}, word_list_id={word_list_id}")
+                    elif key == 'word_list' or key == 'word_list_name':
+                        word_list_name = value
+                        logger.info(f"Found word_list_name: {word_list_name}")
+            logger.info(f"✅ Using metadata: child_id={child_id}, word_list_name={word_list_name}")
         except Exception as e:
             logger.warning(f"Failed to parse metadata '{room_metadata}': {e}. Using defaults.")
     else:
-        logger.info(f"No metadata found, using defaults: child_id={child_id}, word_list_id={word_list_id}")
+        logger.info(f"No metadata found, using defaults: child_id={child_id}, word_list_name={word_list_name or 'default'}")
 
     # Verify the child and word list exist
     try:
-        from .database import get_child_profile, get_word_list
-        child = get_child_profile(child_id)
-        word_list, words = get_word_list(word_list_id)
-        logger.info(f"✅ Found child: {child.name} (age {child.age})")
-        logger.info(f"✅ Found word list: {word_list.name} with {len(words)} words")
-    except Exception as e:
-        logger.error(f"❌ Database lookup failed: {e}")
+        from .database import get_child_profile
+        from .word_list_loader import load_word_list_from_file, get_default_word_list
 
-    logger.info(f"🎯 Final agent configuration: child_id={child_id}, word_list_id={word_list_id}")
+        child = get_child_profile(child_id)
+        logger.info(f"✅ Found child: {child.name} (age {child.age})")
+
+        # Load word list from file
+        if word_list_name is None:
+            word_list_name = get_default_word_list()
+
+        list_name, words = load_word_list_from_file(word_list_name)
+        logger.info(f"✅ Loaded word list: '{list_name}' with {len(words)} words")
+    except Exception as e:
+        logger.error(f"❌ Failed to load data: {e}")
+
+    logger.info(f"🎯 Final agent configuration: child_id={child_id}, word_list_name={word_list_name}")
 
     # Create the spelling tutor session (following RAG example pattern)
     from .agent import SpellingTutorAgent
@@ -142,7 +149,7 @@ async def entrypoint(ctx: agents.JobContext):
     # Create the spelling tutor agent
     agent = SpellingTutorAgent(
         child_id=child_id,
-        word_list_id=word_list_id,
+        word_list_name=word_list_name,
     )
 
     # Add event listeners for proper interruption handling (like working examples)
