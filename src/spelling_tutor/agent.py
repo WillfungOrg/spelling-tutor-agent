@@ -55,12 +55,44 @@ class SpellingTutorAgent(Agent):
 
         # Simple instructions like working examples
         super().__init__(
-            instructions=f"""You are {self.child_name}'s spelling tutor.
-            ONLY call the spell_word function when the user provides their spelling attempt.
-            DO NOT call spell_word based on your own responses or when presenting a new word.
-            Wait for the user to respond before calling any functions.
-            Be encouraging and patient."""
+            instructions=self._get_dynamic_instructions()
         )
+
+    def _get_dynamic_instructions(self) -> str:
+        """Generate instructions with current word context."""
+        base = f"""You are {self.child_name}'s spelling tutor.
+
+CRITICAL CONTEXT:
+"""
+
+        if self.current_word and self.current_tutor:
+            attempt_num = self.current_tutor.current_attempts + 1
+            base += f"""- Current word to spell: {self.current_word.word.upper()}
+- This is attempt #{attempt_num} of 3
+- Correct spelling: {'-'.join(self.current_word.word.upper())}
+"""
+
+            # Add hint context if hints have been given
+            if self.current_tutor.current_attempts > 0:
+                hints_given = []
+                if self.current_tutor.current_attempts >= 1:
+                    hints_given.append("phonics hint")
+                if self.current_tutor.current_attempts >= 2:
+                    hints_given.append("letter-by-letter guidance")
+                base += f"- Hints already provided: {', '.join(hints_given)}\n"
+        else:
+            base += "- No word is currently active\n"
+
+        base += """
+INSTRUCTIONS:
+- Wait for the user to spell the current word
+- ONLY call spell_word when the user provides their spelling attempt for the current word
+- DO NOT call spell_word based on your own responses or when presenting a new word
+- If the user says something unrelated to the current word, gently redirect them back to spelling the current word
+- Be encouraging, patient, and keep focus on the current word
+- After correct spelling, present the next word clearly
+"""
+        return base
 
     @function_tool
     async def spell_word(self, context: RunContext, spelling_attempt: str) -> str:
@@ -82,6 +114,9 @@ class SpellingTutorAgent(Agent):
 
         # Increment attempts
         self.current_tutor.current_attempts += 1
+
+        # Update instructions to reflect new attempt count
+        self.instructions = self._get_dynamic_instructions()
 
         # Check spelling
         correct, feedback = self.current_tutor.check_spelling(attempt)
@@ -151,14 +186,23 @@ class SpellingTutorAgent(Agent):
                 phonics_category
             )
             logger.info(f"Started new word: {self.current_word.word}")
+
+            # Update instructions with new word context
+            self.instructions = self._get_dynamic_instructions()
         else:
             self.current_word = None
             self.current_tutor = None
             complete_session(self.db_session.id)
 
+            # Update instructions to reflect no active word
+            self.instructions = self._get_dynamic_instructions()
+
     async def on_enter(self):
         """Called when agent becomes active - like working examples."""
         logger.info("Spelling tutor agent session started")
+
+        # Update instructions with current word context
+        self.instructions = self._get_dynamic_instructions()
 
         if self.current_word:
             greeting = f"Hi {self.child_name}! Let's practice spelling. Your word is: {self.current_word.word}. Please spell {self.current_word.word} for me."
