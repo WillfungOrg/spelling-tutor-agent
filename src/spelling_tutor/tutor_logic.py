@@ -43,6 +43,7 @@ class SpellingTutor:
     def get_phonics_hint(self, attempt_number: int) -> str:
         """
         Get a phonics hint based on the attempt number and word characteristics.
+        Uses child-friendly, playful language appropriate for ages 6-10.
 
         Args:
             attempt_number: The current attempt number (1, 2, 3, etc.).
@@ -51,11 +52,25 @@ class SpellingTutor:
             str: Appropriate hint for the attempt level.
         """
         if attempt_number == 1:
-            return "Think about the sounds you hear. What sound does it start with?"
+            # Hint 1: Starting sound (4 variations)
+            hints = [
+                "Let's sound it out! What sound do you hear at the beginning?",
+                "Listen carefully - what's the first sound you hear?",
+                "Say the word slowly. What sound does it start with?",
+                "What letter makes that first sound you hear?"
+            ]
+            return random.choice(hints)
 
         elif attempt_number == 2:
+            # Hint 2: Syllables (4 variations)
             syllables = self.count_syllables(self.word)
-            return f"Let's break it into parts. It has {syllables} syllable{'s' if syllables != 1 else ''}."
+            hints = [
+                f"Let's clap it out! This word has {syllables} part{'s' if syllables != 1 else ''}!",
+                f"Try saying it slowly - it has {syllables} part{'s' if syllables != 1 else ''} to it!",
+                f"Listen: {self.word}. Can you hear the {syllables} part{'s' if syllables != 1 else ''}?",
+                f"Clap with me! {self.word} has {syllables} clap{'s' if syllables != 1 else ''}!"
+            ]
+            return random.choice(hints)
 
         elif attempt_number == 3:
             return self._get_phoneme_breakdown()
@@ -67,31 +82,52 @@ class SpellingTutor:
     def _get_phoneme_breakdown(self) -> str:
         """
         Get a phoneme breakdown based on the phonics category.
+        Uses simple, child-friendly language without technical jargon.
 
         Returns:
             str: Phoneme breakdown hint.
         """
-        if self.phonics_category == "CVC":
-            return f"The word has these sounds: {self.word[0]} - {self.word[1]} - {self.word[2]} (consonant-vowel-consonant)"
+        # Handle multi-word phrases (remove spaces for sound analysis)
+        word_for_sounds = self.word.replace(" ", "")
+
+        if self.phonics_category == "CVC" and len(word_for_sounds) == 3:
+            # CVC words - simple 3-sound breakdown (NO technical terms)
+            hints = [
+                f"Let's break it down: '{word_for_sounds[0]}'... '{word_for_sounds[1]}'... '{word_for_sounds[2]}'. Now put them together!",
+                f"Say each sound slowly: {word_for_sounds[0]}, then {word_for_sounds[1]}, then {word_for_sounds[2]}!",
+                f"It's three sounds: '{word_for_sounds[0]}', '{word_for_sounds[1]}', '{word_for_sounds[2]}'. Can you spell that?"
+            ]
+            return random.choice(hints)
 
         elif self.phonics_category.startswith("digraph-"):
+            # Digraphs - two letters, one sound
             digraph = self.phonics_category.split("-")[1]
-            return f"The word has these sounds: Listen for the '{digraph}' sound that makes one sound together."
+            hints = [
+                f"This word has a special '{digraph}' sound - two letters that make one sound!",
+                f"Listen for the '{digraph}' - those two letters work together!",
+                f"Hear that '{digraph}' sound? That's your clue!"
+            ]
+            return random.choice(hints)
 
         elif self.phonics_category.startswith("blend-"):
+            # Blends - two letters that blend
             blend = self.phonics_category.split("-")[1]
-            return f"The word has these sounds: It starts with the '{blend}' blend - two consonants that blend together."
+            hints = [
+                f"It starts with '{blend}' - two letters that blend their sounds together!",
+                f"Listen for the '{blend}' at the start - two letters, but they blend!",
+                f"The '{blend}' sound is at the beginning - two letters mixed together!"
+            ]
+            return random.choice(hints)
 
         else:
-            # For 'other' category, give a general breakdown
-            vowels = "aeiou"
-            sounds = []
-            for char in self.word:
-                if char in vowels:
-                    sounds.append(f"'{char}' (vowel)")
-                else:
-                    sounds.append(f"'{char}' (consonant)")
-            return f"The word has these sounds: {' - '.join(sounds)}"
+            # For 'other' category or longer words - simple sound-by-sound
+            # Split into individual letters (max 5 for readability)
+            if len(word_for_sounds) <= 5:
+                sounds = "', '".join(word_for_sounds)
+                return f"Let's spell it sound by sound: '{sounds}'. Try putting those letters together!"
+            else:
+                # For longer words, give first and last sounds
+                return f"This word starts with '{word_for_sounds[0]}' and ends with '{word_for_sounds[-1]}'. Think about the sounds in between!"
 
     def check_spelling(self, user_input: str) -> Tuple[bool, str]:
         """
@@ -123,17 +159,44 @@ class SpellingTutor:
         """
         Get random positive feedback for correct spelling.
 
+        Returns 24 varied, child-friendly options across 3 categories:
+        - Short celebrations (high energy)
+        - Warm praise (encouraging)
+        - Specific praise (builds confidence)
+
         Returns:
             str: Random positive feedback message.
         """
         feedback_options = [
-            "Awesome!",
-            "Great job!",
+            # Short celebrations (8)
+            "Yay!",
+            "Yes!",
+            "Woohoo!",
             "You got it!",
-            "Fantastic!",
-            "Perfect!",
-            "Excellent work!",
-            "Amazing!"
+            "That's it!",
+            "Boom!",
+            "Sweet!",
+            "Nice!",
+
+            # Warm praise (8)
+            "I'm so proud of you!",
+            "You're doing amazing!",
+            "You're so good at this!",
+            "I knew you could do it!",
+            "You're a spelling star!",
+            "That was awesome!",
+            "You're incredible!",
+            "I love how you tried!",
+
+            # Specific praise (8)
+            "You remembered all the letters!",
+            "You sounded that out perfectly!",
+            "Great listening!",
+            "You got that tricky one!",
+            "That was a hard word and you got it!",
+            "Nice thinking!",
+            "You really focused!",
+            "You're getting so good at this!"
         ]
         return random.choice(feedback_options)
 

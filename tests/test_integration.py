@@ -283,14 +283,17 @@ def test_phonics_category_integration(temp_db, monkeypatch):
         elif word.word == "tree":
             assert phonics_category == "blend-tr"
 
-        # Test that phonics-specific hints are generated
+        # Test that phonics-specific hints are generated (now child-friendly)
         hint3 = tutor.get_phonics_hint(3)
 
         if phonics_category == "CVC":
-            assert "consonant-vowel-consonant" in hint3
+            # Should break down the letters, no technical jargon like "consonant-vowel-consonant"
+            assert ("c" in hint3.lower() and "a" in hint3.lower() and "t" in hint3.lower())
         elif phonics_category.startswith("digraph-"):
+            # Should mention the digraph letters
             assert phonics_category.split("-")[1] in hint3
         elif phonics_category.startswith("blend-"):
+            # Should mention the blend letters
             assert phonics_category.split("-")[1] in hint3
 
         # Record a practice attempt
