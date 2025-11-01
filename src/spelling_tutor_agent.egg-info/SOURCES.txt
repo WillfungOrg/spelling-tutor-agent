@@ -2,11 +2,13 @@ README.md
 pyproject.toml
 src/spelling_tutor/__init__.py
 src/spelling_tutor/agent.py
+src/spelling_tutor/agent_worker.py
 src/spelling_tutor/config.py
 src/spelling_tutor/database.py
 src/spelling_tutor/main.py
 src/spelling_tutor/tutor_logic.py
 src/spelling_tutor/types.py
+src/spelling_tutor/word_list_loader.py
 src/spelling_tutor/word_manager.py
 src/spelling_tutor_agent.egg-info/PKG-INFO
 src/spelling_tutor_agent.egg-info/SOURCES.txt
