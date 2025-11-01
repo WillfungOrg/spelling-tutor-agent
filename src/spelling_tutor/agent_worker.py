@@ -127,7 +127,7 @@ async def entrypoint(ctx: agents.JobContext):
         # LLM - GPT-4o-mini for responses
         llm=openai.LLM(
             model="gpt-4o-mini",
-            temperature=0.7,  # Standard temperature for natural responses
+            temperature=0.1,  # Low temperature to minimize paraphrasing of function responses
             api_key=config.openai_api_key,
         ),
 

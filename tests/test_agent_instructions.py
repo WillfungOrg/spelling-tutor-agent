@@ -35,9 +35,9 @@ def agent_with_words(temp_db, monkeypatch):
 
     # Create test words
     agent.words = [
-        Word(id=1, word="butterfly", difficulty="hard"),
-        Word(id=2, word="cat", difficulty="easy"),
-        Word(id=3, word="dog", difficulty="easy"),
+        Word(id=1, word="butterfly", difficulty="hard", word_list_id=0),
+        Word(id=2, word="cat", difficulty="easy", word_list_id=0),
+        Word(id=3, word="dog", difficulty="easy", word_list_id=0),
     ]
 
     agent.current_word_index = 0
@@ -105,7 +105,8 @@ def test_dynamic_instructions_prevents_jumping(agent_with_words):
     # Should have clear guidance about staying focused
     assert "If the user says something unrelated to the current word" in instructions
     assert "gently redirect them back to spelling the current word" in instructions
-    assert "keep focus on the current word" in instructions
+    # The instructions prevent jumping by explicitly guiding redirection
+    assert "ONLY call spell_word when the user provides their spelling attempt for the current word" in instructions
 
 
 def test_dynamic_instructions_when_no_word_active(agent_with_words):

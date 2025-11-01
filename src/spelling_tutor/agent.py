@@ -4,6 +4,7 @@ Uses function tools instead of overriding turn completion methods.
 """
 
 import asyncio
+import random
 from livekit import agents, rtc
 from livekit.agents import Agent, AgentSession, RunContext
 from livekit.agents.llm import function_tool
@@ -89,8 +90,11 @@ INSTRUCTIONS:
 - ONLY call spell_word when the user provides their spelling attempt for the current word
 - DO NOT call spell_word based on your own responses or when presenting a new word
 - If the user says something unrelated to the current word, gently redirect them back to spelling the current word
-- Be encouraging, patient, and keep focus on the current word
-- After correct spelling, present the next word clearly
+
+IMPORTANT: The spell_word function speaks directly to the child using session.say().
+When spell_word returns an empty string, that means it already spoke the response.
+Do not repeat, paraphrase, or add anything after spell_word returns empty string.
+Simply wait for the next user input.
 """
         return base
 
@@ -102,7 +106,16 @@ INSTRUCTIONS:
             spelling_attempt: The user's spelling attempt (e.g., 'c a t' or 'cat')
         """
         if not self.current_word or not self.current_tutor:
-            return "We've finished all the words! Great job practicing today!"
+            # Session already completed
+            completions = [
+                f"We've finished all the words! Great job practicing today, {self.child_name}!",
+                f"All done! You did awesome today, {self.child_name}!",
+                f"You already finished! Great work, {self.child_name}!"
+            ]
+            response = random.choice(completions)
+            # Speak directly to bypass LLM reformulation
+            await self.session.say(response)
+            return ""  # Return empty to prevent LLM from generating additional response
 
         # Clean the attempt
         attempt = spelling_attempt.strip().lower().replace(" ", "").replace(".", "").replace(",", "")
@@ -115,9 +128,6 @@ INSTRUCTIONS:
         # Increment attempts
         self.current_tutor.current_attempts += 1
 
-        # Update instructions to reflect new attempt count
-        self.instructions = self._get_dynamic_instructions()
-
         # Check spelling
         correct, feedback = self.current_tutor.check_spelling(attempt)
 
@@ -128,29 +138,106 @@ INSTRUCTIONS:
             await self.move_to_next_word()
 
             if self.current_word:
-                return f"Excellent work, {self.child_name}! You spelled '{previous_word}' perfectly! Now let's try the next word: '{self.current_word.word}'. Please spell it for me."
+                # Varied success responses (12 patterns) - child-friendly and engaging
+                responses = [
+                    # Group 1: Excited celebrations
+                    f"Woohoo! You got '{previous_word}' right, {self.child_name}! Ready for another one? Let's spell '{self.current_word.word}'!",
+                    f"Yes! Perfect spelling on '{previous_word}'! Okay, here comes '{self.current_word.word}' - give it a try!",
+                    f"Amazing! You nailed '{previous_word}'! Next up: '{self.current_word.word}'. You've got this!",
+
+                    # Group 2: Warm encouragement
+                    f"That's right, {self.child_name}! '{previous_word}' was correct! Let's keep going - try '{self.current_word.word}' now!",
+                    f"You did it! '{previous_word}' is spelled perfectly! Alright, spell this one for me: '{self.current_word.word}'!",
+                    f"Nice work on '{previous_word}'! Ready for the next one? Here it is: '{self.current_word.word}'!",
+
+                    # Group 3: Playful
+                    f"Boom! You got '{previous_word}'! Can you spell '{self.current_word.word}' too? I bet you can!",
+                    f"Yay! '{previous_word}' is correct! Ooh, here's a new one: '{self.current_word.word}'!",
+                    f"Sweet! '{previous_word}' is right! Let's try '{self.current_word.word}' next!",
+
+                    # Group 4: Progress building
+                    f"You're on a roll! '{previous_word}' is perfect! Keep going with '{self.current_word.word}'!",
+                    f"Another one right! '{previous_word}' is correct! Ready for '{self.current_word.word}'?",
+                    f"You're doing great! '{previous_word}' is right! Now try '{self.current_word.word}'!"
+                ]
+                response = random.choice(responses)
+                # Speak directly to bypass LLM reformulation
+                await self.session.say(response)
+                return ""  # Return empty to prevent LLM from generating additional response
             else:
-                return f"Excellent work, {self.child_name}! You spelled '{previous_word}' perfectly! You finished all the words! Amazing job today!"
+                # Session completion - warm and celebratory
+                completions = [
+                    f"Woohoo! You finished all the words! You're an amazing speller, {self.child_name}!",
+                    f"You did it! All done! Great job today, {self.child_name}! You should be so proud!",
+                    f"Yes! You spelled them all! You're a spelling star, {self.child_name}!"
+                ]
+                response = random.choice(completions)
+                # Speak directly to bypass LLM reformulation
+                await self.session.say(response)
+                return ""  # Return empty to prevent LLM from generating additional response
 
         elif self.current_tutor.current_attempts < 3:
-            # Give hint
+            # Give hint with varied, playful delivery (6 patterns)
             hint = self.current_tutor.get_phonics_hint(self.current_tutor.current_attempts)
+
             if feedback:
-                return f"{feedback} Here's a hint: {hint}. Take your time and try again!"
+                # "Almost!" feedback - add warm hint delivery
+                hint_deliveries = [
+                    f"{feedback} Ooh, let me help! {hint} Try again!",
+                    f"{feedback} Hmm, want a clue? {hint} Give it another go!",
+                    f"{feedback} Let me give you a hint: {hint} You've got this!",
+                    f"{feedback} Here's a little help: {hint} Try spelling it again!",
+                    f"{feedback} I'll give you a secret: {hint} Can you spell it now?",
+                    f"{feedback} Listen to this clue: {hint} Try one more time!"
+                ]
             else:
-                return f"Not quite! Let me help. {hint}. You've got this! Try spelling '{self.current_word.word}' again."
+                # No "Almost" feedback - encourage and hint
+                hint_deliveries = [
+                    f"Ooh, let me help! {hint} Try again!",
+                    f"Hmm, want a clue? {hint} Give it another go!",
+                    f"Let me give you a hint: {hint} You've got this!",
+                    f"Here's a little help: {hint} Try spelling '{self.current_word.word}' again!",
+                    f"I'll give you a secret: {hint} Can you spell '{self.current_word.word}' now?",
+                    f"Listen to this clue: {hint} Try '{self.current_word.word}' one more time!"
+                ]
+
+            response = random.choice(hint_deliveries)
+            # Speak directly to bypass LLM reformulation
+            await self.session.say(response)
+            return ""  # Return empty to prevent LLM from generating additional response
 
         else:
-            # Final attempt
+            # Final attempt - warm failure recovery with emotional support
             await self.record_attempt(correct=False)
             previous_word = self.current_word.word
-            correct_spelling = previous_word.upper()
+            correct_spelling = previous_word.lower()  # Use lowercase for friendlier feel
             await self.move_to_next_word()
 
             if self.current_word:
-                return f"That's okay, {self.child_name}. The correct spelling is '{correct_spelling}'. Let's move on to the next word: '{self.current_word.word}'. Please spell it for me."
+                # Varied failure recovery (6 patterns) - acknowledge effort and build confidence
+                recoveries = [
+                    f"You tried so hard, {self.child_name}! This one was '{correct_spelling}'. That was tricky! Let's try '{self.current_word.word}'.",
+                    f"Great try! The answer is '{correct_spelling}'. You worked really hard on that! Ready for '{self.current_word.word}'?",
+                    f"I love how you tried! It's '{correct_spelling}'. Don't worry - try '{self.current_word.word}' now!",
+                    f"That's a super hard word! It's spelled '{correct_spelling}'. Now you know! Let's spell '{self.current_word.word}'.",
+                    f"Ooh, tricky! The answer is '{correct_spelling}'. That one tricks lots of people! Try '{self.current_word.word}'!",
+                    f"Nice try! The answer is '{correct_spelling}'. I think you'll like this next one: '{self.current_word.word}'!"
+                ]
+                response = random.choice(recoveries)
+                # Speak directly to bypass LLM reformulation
+                await self.session.say(response)
+                return ""  # Return empty to prevent LLM from generating additional response
             else:
-                return f"That's okay, {self.child_name}. The correct spelling is '{correct_spelling}'. You've completed all the words! Great job practicing!"
+                # Session completion after failure - still celebratory
+                completions = [
+                    f"That one was '{correct_spelling}'. You finished all the words! Great job practicing today, {self.child_name}!",
+                    f"The answer is '{correct_spelling}'. You tried so hard on all the words! I'm proud of you, {self.child_name}!",
+                    f"It's '{correct_spelling}'. You worked through all the words! Nice job today, {self.child_name}!"
+                ]
+                response = random.choice(completions)
+                # Speak directly to bypass LLM reformulation
+                await self.session.say(response)
+                return ""  # Return empty to prevent LLM from generating additional response
 
     def _is_noise_input(self, attempt: str) -> bool:
         """Check if input is noise."""
@@ -186,23 +273,14 @@ INSTRUCTIONS:
                 phonics_category
             )
             logger.info(f"Started new word: {self.current_word.word}")
-
-            # Update instructions with new word context
-            self.instructions = self._get_dynamic_instructions()
         else:
             self.current_word = None
             self.current_tutor = None
             complete_session(self.db_session.id)
 
-            # Update instructions to reflect no active word
-            self.instructions = self._get_dynamic_instructions()
-
     async def on_enter(self):
         """Called when agent becomes active - like working examples."""
         logger.info("Spelling tutor agent session started")
-
-        # Update instructions with current word context
-        self.instructions = self._get_dynamic_instructions()
 
         if self.current_word:
             greeting = f"Hi {self.child_name}! Let's practice spelling. Your word is: {self.current_word.word}. Please spell {self.current_word.word} for me."
