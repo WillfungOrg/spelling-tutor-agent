@@ -432,3 +432,63 @@ def test_syllable_counting_with_y():
     # Words where 'y' acts as consonant (at beginning)
     assert tutor.count_syllables("yes") == 1
     assert tutor.count_syllables("yellow") == 2  # yel-low
+
+
+def test_check_spelling_multi_word_phrases():
+    """Test spelling validation for multi-word phrases like 'french fries'."""
+    tutor = SpellingTutor("french fries", "medium", "other")
+
+    # Test correct spelling without space (as voice agent removes spaces)
+    correct, feedback = tutor.check_spelling("frenchfries")
+    assert correct is True, "Should accept 'frenchfries' for 'french fries'"
+    assert feedback in ["Awesome!", "Great job!", "You got it!", "Fantastic!", "Perfect!", "Excellent work!", "Amazing!"]
+
+    # Test correct spelling with space
+    correct, feedback = tutor.check_spelling("french fries")
+    assert correct is True, "Should accept 'french fries' with space"
+
+    # Test case insensitive
+    correct, feedback = tutor.check_spelling("FRENCHFRIES")
+    assert correct is True, "Should be case insensitive"
+
+    # Test with whitespace
+    correct, feedback = tutor.check_spelling("  frenchfries  ")
+    assert correct is True, "Should handle whitespace"
+
+    # Test incorrect spelling
+    correct, feedback = tutor.check_spelling("frenchfrys")
+    assert correct is False, "Should reject misspelling"
+
+
+def test_check_spelling_multi_word_close_match():
+    """Test near-miss detection for multi-word phrases."""
+    tutor = SpellingTutor("ice cream", "easy", "other")
+
+    # Test 1 character difference (should give "Almost!")
+    correct, feedback = tutor.check_spelling("icecream")  # Correct
+    assert correct is True
+
+    correct, feedback = tutor.check_spelling("icecrem")  # 1 char diff
+    assert correct is False
+    assert feedback == "Almost! Try again."
+
+    correct, feedback = tutor.check_spelling("icecrean")  # 1 char diff
+    assert correct is False
+    assert feedback == "Almost! Try again."
+
+
+def test_check_spelling_various_multi_word_phrases():
+    """Test various multi-word phrases to ensure robust handling."""
+    test_cases = [
+        ("hot dog", "hotdog"),
+        ("peanut butter", "peanutbutter"),
+        ("ice cream", "icecream"),
+        ("french fries", "frenchfries"),
+        ("apple pie", "applepie"),
+    ]
+
+    for word, expected_input in test_cases:
+        tutor = SpellingTutor(word, "medium", "other")
+        correct, feedback = tutor.check_spelling(expected_input)
+        assert correct is True, f"Should accept '{expected_input}' for '{word}'"
+        assert feedback != "", f"Should provide feedback for '{word}'"

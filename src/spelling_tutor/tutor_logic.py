@@ -103,15 +103,16 @@ class SpellingTutor:
         Returns:
             tuple: (is_correct, feedback_message)
         """
-        # Normalize input
-        normalized_input = user_input.strip().lower()
+        # Normalize input - remove spaces to handle multi-word phrases like "french fries"
+        normalized_input = user_input.strip().lower().replace(" ", "")
+        normalized_word = self.word.replace(" ", "")
 
         # Check for exact match
-        if normalized_input == self.word:
+        if normalized_input == normalized_word:
             return True, self.get_positive_feedback()
 
         # Check if it's close (within 1-2 character edits)
-        edit_distance = self._levenshtein_distance(normalized_input, self.word)
+        edit_distance = self._levenshtein_distance(normalized_input, normalized_word)
         if edit_distance <= 2 and len(normalized_input) > 0:
             return False, "Almost! Try again."
 
