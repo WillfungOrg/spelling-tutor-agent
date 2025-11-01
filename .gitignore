@@ -19,3 +19,8 @@ data/word_lists/*.txt
 agent.log
 livekit_token.txt
 nohup.out
+logs/
+
+# IDE and coverage files
+htmlcov/
+.coverage
