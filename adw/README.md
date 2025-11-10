@@ -2,6 +2,18 @@
 
 ADW automates software development using isolated git worktrees. The `_iso` suffix stands for "isolated" - these workflows run in separate git worktrees, enabling multiple agents to run at the same time in their own respective directories. Each workflow gets its own complete copy of the repository with dedicated ports and filesystem isolation.
 
+## Documentation
+
+**📖 For Simple Tasks:** See [`docs/SIMPLE_TASK_SDLC.md`](../docs/SIMPLE_TASK_SDLC.md)
+- Complete 5-stage SDLC framework for routine development work
+- Integration guide for manual vs ADW automated workflows
+- Task templates and decision trees
+- Examples and quick reference
+
+This README focuses on ADW technical implementation. For workflow guidance, process documentation, and best practices for simple tasks, refer to the Simple Task SDLC guide.
+
+---
+
 ## Key Concepts
 
 ### Isolated Execution

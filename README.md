@@ -300,6 +300,38 @@ spelling-tutor-agent/
 └── README.md                # This file
 ```
 
+## Development Workflow
+
+### For Contributors
+
+This project uses a formalized SDLC (Software Development Life Cycle) framework for simple tasks (bug fixes, small features, maintenance). This ensures consistent quality and prevents regressions.
+
+**📖 Simple Task SDLC Guide:** [`docs/SIMPLE_TASK_SDLC.md`](docs/SIMPLE_TASK_SDLC.md)
+
+**When to use:**
+- Bug fixes (1-4 hours, touches 1-5 files)
+- Small features with clear requirements
+- Maintenance tasks (refactoring, dependency updates, cleanup)
+
+**Quick Start:**
+```bash
+# Option 1: Fully Automated (recommended)
+cd adw/
+uv run adw_sdlc_iso.py <issue-number>
+
+# Option 2: Manual (for learning or simple tasks)
+# Use slash commands: /feature, /bug, /chore, /implement, /test, /review
+```
+
+**Templates:**
+- [Bug Fix Template](docs/templates/simple-bug-fix-template.md)
+- [Feature Template](docs/templates/simple-feature-template.md)
+- [Chore Template](docs/templates/simple-chore-template.md)
+
+**Related Documentation:**
+- [`adw/README.md`](adw/README.md) - Complete ADW automation system
+- [`.claude/validation-checklists/`](.claude/validation-checklists/) - Quality gates
+
 ## Future Enhancements
 
 - 🌐 **Multi-User Support** - Multiple children per family account
