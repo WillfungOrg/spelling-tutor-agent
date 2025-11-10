@@ -1,0 +1,8 @@
+{
+  "plugins": [
+    {
+      "source": "/Users/williamfung/agentic-coding-library/tac-core-plugin",
+      "strict": false
+    }
+  ]
+}

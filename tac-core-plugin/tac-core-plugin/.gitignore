@@ -1,0 +1,22 @@
+# Runtime directories that should never be in the plugin source
+# These are created by ADW workflows and should be in the project root, not in the plugin
+trees/
+agents/
+repos/
+logs/
+
+# Build artifacts
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Git metadata (when plugin is copied)
+.git/
+
+# TAC runtime state
+.tac/
+
+# Environment files
+.env
+.ports.env

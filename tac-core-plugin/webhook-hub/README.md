@@ -2,18 +2,6 @@
 
 ADW automates software development using isolated git worktrees. The `_iso` suffix stands for "isolated" - these workflows run in separate git worktrees, enabling multiple agents to run at the same time in their own respective directories. Each workflow gets its own complete copy of the repository with dedicated ports and filesystem isolation.
 
-## Documentation
-
-**📖 For Simple Tasks:** See [`docs/SIMPLE_TASK_SDLC.md`](../docs/SIMPLE_TASK_SDLC.md)
-- Complete 5-stage SDLC framework for routine development work
-- Integration guide for manual vs ADW automated workflows
-- Task templates and decision trees
-- Examples and quick reference
-
-This README focuses on ADW technical implementation. For workflow guidance, process documentation, and best practices for simple tasks, refer to the Simple Task SDLC guide.
-
----
-
 ## Key Concepts
 
 ### Isolated Execution
@@ -117,6 +105,130 @@ uv run adw_triggers/trigger_cron.py
 # Start webhook server (for instant GitHub events)
 uv run adw_triggers/trigger_webhook.py
 ```
+
+## Learning System
+
+The ADW system includes a **self-improving learning loop** that learns from test results, code reviews, and deployment outcomes to reduce mistakes over time.
+
+### How It Works
+
+1. **After each ADW execution**, feedback is collected from:
+   - **Test results** - Pass/fail rates and failure patterns
+   - **PR reviews** - Review status and human changes made
+   - **Deployments** - Success/failure and post-deployment errors
+
+2. **Patterns are extracted** and stored in the pattern database with success rates
+
+3. **Decision weights are retrained** based on accumulated outcomes
+
+4. **Prompts are refined** using the Self-Refine pattern (3-5 iterations)
+
+5. **Learnings are shared** across all projects via global pattern store
+
+### Components
+
+- **Test Feedback Collector** - Captures pytest output, identifies failure patterns
+- **Review Feedback Collector** - Analyzes PR reviews and categorizes changes
+- **Deployment Feedback Collector** - Tracks deployment status and errors
+- **Cross-Project Learning** - Shares patterns across all repositories
+- **Prompt Refiner** - Self-improves prompts based on feedback
+
+### Enable/Disable
+
+```bash
+# Enable (default)
+export ENABLE_ADW_LEARNING=true
+
+# Disable
+export ENABLE_ADW_LEARNING=false
+```
+
+### View Learning Data
+
+```bash
+# Local patterns
+cat .tac/learning/pattern_database.json
+
+# Execution logs
+ls .tac/learning/execution_logs/
+
+# Global patterns (shared across projects)
+cat ~/agentic-coding-library/.tac/learning/global/global_pattern_database.json
+
+# Prompt refinement history
+cat .tac/prompts/refinement_history.json
+
+# Refined prompts
+ls .tac/prompts/
+```
+
+### Success Metrics
+
+The learning system tracks:
+- **Test success rate** - Percentage of tests passing
+- **False fix rate** - How often "fixes" don't actually work
+- **Review change rate** - How often human changes are needed
+- **Deployment success rate** - Percentage of successful deployments
+
+**Goal:** Improve success rate from 70% → 85% over 50 executions.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     ADW Execution                            │
+│  (adw_plan_build_test_iso.py, adw_sdlc_iso.py, etc.)        │
+└───────────────────┬─────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Feedback Collection                             │
+│  ┌─────────────┬──────────────┬────────────────────┐        │
+│  │ Test        │ Review       │ Deployment         │        │
+│  │ Collector   │ Collector    │ Collector          │        │
+│  └─────────────┴──────────────┴────────────────────┘        │
+└───────────────────┬─────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────────┐
+│              LearningRecord Created                          │
+│  - Test results (pass/fail, patterns)                        │
+│  - Review feedback (status, categories)                      │
+│  - Deployment outcome (success/errors)                       │
+│  - Problems encountered                                      │
+│  - False fix detection                                       │
+└───────────────────┬─────────────────────────────────────────┘
+                    │
+        ┌───────────┴────────────┐
+        ▼                        ▼
+┌──────────────────┐    ┌──────────────────┐
+│ Pattern Database │    │ Prompt Refiner   │
+│ Updated          │    │ (Self-Refine)    │
+│                  │    │ - 3-5 iterations │
+│ .tac/learning/   │    │ - Feedback →     │
+│ pattern_db.json  │    │   Suggestions    │
+└────────┬─────────┘    └────────┬─────────┘
+         │                       │
+         ▼                       ▼
+┌─────────────────────────────────────────┐
+│ Cross-Project Learning Store            │
+│                                          │
+│ ~/agentic-coding-library/                │
+│   .tac/learning/global/                  │
+│     - global_pattern_database.json       │
+│     - project_registry.json              │
+│                                          │
+│ Syncs patterns bidirectionally           │
+└──────────────────────────────────────────┘
+```
+
+### Files
+
+- `adw_modules/learning_feedback.py` - Feedback collectors
+- `adw_modules/cross_project_learning.py` - Cross-project aggregation
+- `adw_modules/prompt_refiner.py` - Self-Refine engine
+- `.tac/learning/` - Local learning data
+- `~/agentic-coding-library/.tac/learning/global/` - Global patterns
 
 ## ADW Isolated Workflow Scripts
 

@@ -1,0 +1,19 @@
+{
+  "name": "agentic-coding-library",
+  "owner": {
+    "name": "WillfungOrg",
+    "email": "willfung28@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "tac-core-willfung",
+      "source": "./tac-core-plugin",
+      "description": "Core TAC principles, slash commands, and ADW workflow templates",
+      "version": "2.0.1",
+      "author": {
+        "name": "WillfungOrg",
+        "email": "willfung28@gmail.com"
+      }
+    }
+  ]
+}

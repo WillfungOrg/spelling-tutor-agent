@@ -1,0 +1,10 @@
+{
+  "name": "tac-core-willfung",
+  "version": "2.0.1",
+  "description": "Complete AI development workflow system with 44 commands, 14 ADW workflows, Agent SDK (async webhook fixes), webhook automation, and comprehensive SDLC tools for spec-first development",
+  "author": {
+    "name": "WillfungOrg",
+    "email": "willfung28@gmail.com"
+  },
+  "repository": "https://github.com/WillfungOrg/agentic-coding-library"
+}

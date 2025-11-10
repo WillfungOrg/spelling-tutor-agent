@@ -1,0 +1,76 @@
+# macOS
+.DS_Store
+
+# Editor directories and files
+.vscode/
+.idea/
+
+# Dependencies
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environment variables (contains secrets!)
+.env
+.env.local
+.env.*.local
+
+# Webhook Hub Runtime Files (all in webhook-hub/runtime/)
+webhook-hub/runtime/*     # All webhook runtime state (repos, agents, logs, trees)
+!webhook-hub/runtime/.gitkeep
+*.log
+.ports.env                # Port allocation (runtime)
+
+# Plugin runtime state (should not be in plugin source)
+tac-core-plugin/logs/
+tac-core-plugin/agents/
+tac-core-plugin/trees/
+
+# Test artifacts and generated files
+demo_results.json
+.tac/template_index.json
+webhook-hub/.tac/template_index.json
+
+# ADW Database (runtime state)
+.adw/                    # Queue database and runtime state
+
+# TAC workflow temporary files
+.tac/current-issue*.json
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+tmp/
+
+# Archives and backups (keep these local only)
+*.tar.gz
+*.zip
+backup/
+archive.old/
+.claude.backup.old/
+
+# ADW runtime directories (at root level for backward compatibility)
+/repos                   # Cloned repositories
+/agents                  # ADW workflow state
+/trees                   # Isolated worktrees
+
+# IDE-specific
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# OS-specific
+Thumbs.db
+Desktop.ini
